@@ -11,13 +11,21 @@ int main()
     const int gravity{1};
     const int jumpVelocity{-22};
 
-    // rectangle dimensions
-    const int rectangleWidth{50};
-    const int rectangleHeight{80};
+    // scarfy
+    Texture2D scarfyTexture = LoadTexture("textures/scarfy.png");
+    Rectangle scarfyTextureBoundary;
+    scarfyTextureBoundary.width = scarfyTexture.width / 6;
+    scarfyTextureBoundary.height = scarfyTexture.height;
+    scarfyTextureBoundary.x = 0;
+    scarfyTextureBoundary.y = 0;
+    // init position: center of window
+    Vector2 scarfyPosition;
+    scarfyPosition.x = (windowWidth - scarfyTextureBoundary.width) / 2;
+    scarfyPosition.y = windowHeight - scarfyTextureBoundary.height;
 
     // start on the ground
-    int rectangleTop{windowHeight - rectangleHeight};
-    int rectanglePosY{rectangleTop};
+    float scarfyBoundaryInitialTop{scarfyPosition.y};
+
     int velocityY{0};
 
     bool isInAir{false};
@@ -30,7 +38,7 @@ int main()
         ClearBackground(WHITE);
 
         // ground check
-        isInAir = rectanglePosY < rectangleTop;
+        isInAir = scarfyPosition.y < scarfyBoundaryInitialTop;
         if (isInAir)
         {
             velocityY += gravity;
@@ -51,11 +59,12 @@ int main()
         }
 
         // update position
-        rectanglePosY += velocityY;
+        scarfyPosition.y += velocityY;
 
-        DrawRectangle(windowWidth / 2, rectanglePosY, rectangleWidth, rectangleHeight, BLUE);
+        DrawTextureRec(scarfyTexture, scarfyTextureBoundary, scarfyPosition, WHITE);
 
         EndDrawing();
     }
+    UnloadTexture(scarfyTexture);
     CloseWindow();
 }
