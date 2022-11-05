@@ -7,9 +7,10 @@ int main()
     const int windowHeight = 600;
     InitWindow(windowWidth, windowHeight, "Raylib Dapper Dasher");
 
-    // acceleration due to gravity (pixels/(frame^2))
-    const int gravity{1};
-    const int jumpVelocity{-22};
+    // acceleration due to gravity (pixels/(s^2))
+    const int gravity{1000};
+    // jump velocity (pixels/second)
+    const int jumpVelocity{-600};
 
     // scarfy
     Texture2D scarfyTexture = LoadTexture("textures/scarfy.png");
@@ -26,7 +27,13 @@ int main()
     // start on the ground
     float scarfyBoundaryInitialTop{scarfyPosition.y};
 
-    int velocityY{0};
+    float velocityY{0};
+
+    // animation frame
+    int animationFrame{0};
+    // amount of time before we update the animation frame
+    const float animationUpdateTime{1.0 / 12.0};
+    float animationRunningTime{0};
 
     bool isInAir{false};
 
@@ -34,6 +41,9 @@ int main()
 
     while (!WindowShouldClose())
     {
+        // time since last frame
+        float deltaTime{GetFrameTime()};
+
         BeginDrawing();
         ClearBackground(WHITE);
 
@@ -41,7 +51,7 @@ int main()
         isInAir = scarfyPosition.y < scarfyBoundaryInitialTop;
         if (isInAir)
         {
-            velocityY += gravity;
+            velocityY += gravity * deltaTime;
         }
         else
         {
@@ -59,7 +69,23 @@ int main()
         }
 
         // update position
-        scarfyPosition.y += velocityY;
+        scarfyPosition.y += velocityY * deltaTime;
+
+        // update animation frame
+        animationRunningTime += deltaTime;
+        if (animationRunningTime >= animationUpdateTime)
+        {
+            scarfyTextureBoundary.x = animationFrame * scarfyTextureBoundary.width;
+
+            // reset time meter
+            animationRunningTime = 0.0;
+            // control frame
+            animationFrame++;
+            if (animationFrame > 5)
+            {
+                animationFrame = 0;
+            }
+        }
 
         DrawTextureRec(scarfyTexture, scarfyTextureBoundary, scarfyPosition, WHITE);
 
