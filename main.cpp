@@ -12,6 +12,10 @@ int main()
     // jump velocity (pixels/second)
     const int jumpVelocity{-600};
 
+    float scarfyVelocityY{0};
+
+    float nebulaVelocityX{-600};
+
     // scarfy
     Texture2D scarfyTexture = LoadTexture("textures/scarfy.png");
     Rectangle scarfyTextureBoundary;
@@ -24,16 +28,30 @@ int main()
     scarfyPosition.x = (windowWidth - scarfyTextureBoundary.width) / 2;
     scarfyPosition.y = windowHeight - scarfyTextureBoundary.height;
 
+    // nebula hazard
+    Texture2D nebulaTexture = LoadTexture("textures/12_nebula_spritesheet.png");
+    Rectangle nebulaTextureBoundary = {
+        .x = 0,
+        .y = 0,
+        .width = nebulaTexture.width / 8.0,
+        .height = nebulaTexture.height / 8.0};
+    Vector2 nebulaPosition = {
+        .x = windowWidth,
+        .y = windowHeight - nebulaTextureBoundary.height,
+    };
+
     // start on the ground
     float scarfyBoundaryInitialTop{scarfyPosition.y};
 
-    float velocityY{0};
-
-    // animation frame
-    int animationFrame{0};
+    // animation frames
+    int scarfyAnimationFrame{0};
     // amount of time before we update the animation frame
-    const float animationUpdateTime{1.0 / 12.0};
-    float animationRunningTime{0};
+    const float scarfyAnimationUpdateTime{1.0 / 12.0};
+    float scarfyAnimationRunningTime{0};
+
+    int nebulaAnimationFrame{0};
+    const float nebulaAnimationUpdateTime{1.0 / 12.0};
+    float nebulaAnimationRunningTime{0};
 
     bool isInAir{false};
 
@@ -51,12 +69,12 @@ int main()
         isInAir = scarfyPosition.y < scarfyBoundaryInitialTop;
         if (isInAir)
         {
-            velocityY += gravity * deltaTime;
+            scarfyVelocityY += gravity * deltaTime;
         }
         else
         {
             // on the ground
-            velocityY = 0;
+            scarfyVelocityY = 0;
         }
 
         // Game logics
@@ -64,33 +82,63 @@ int main()
         {
             if (!isInAir)
             {
-                velocityY += jumpVelocity;
+                scarfyVelocityY += jumpVelocity;
             }
         }
 
         // update position
-        scarfyPosition.y += velocityY * deltaTime;
+        scarfyPosition.y += scarfyVelocityY * deltaTime;
+        nebulaPosition.x += nebulaVelocityX * deltaTime;
 
         // update animation frame
-        animationRunningTime += deltaTime;
-        if (animationRunningTime >= animationUpdateTime)
+        if (!isInAir)
         {
-            scarfyTextureBoundary.x = animationFrame * scarfyTextureBoundary.width;
+            // => pause Scarfy while in air
+            scarfyAnimationRunningTime += deltaTime;
+        }
+
+        if (scarfyAnimationRunningTime >= scarfyAnimationUpdateTime)
+        {
+            scarfyTextureBoundary.x = scarfyAnimationFrame * scarfyTextureBoundary.width;
 
             // reset time meter
-            animationRunningTime = 0.0;
+            scarfyAnimationRunningTime = 0.0;
             // control frame
-            animationFrame++;
-            if (animationFrame > 5)
+            scarfyAnimationFrame++;
+            if (scarfyAnimationFrame > 5)
             {
-                animationFrame = 0;
+                scarfyAnimationFrame = 0;
             }
         }
 
+        // => nebula
+        nebulaAnimationRunningTime += deltaTime;
+
+        if (nebulaAnimationRunningTime >= nebulaAnimationUpdateTime)
+        {
+            nebulaTextureBoundary.x = nebulaAnimationFrame * nebulaTextureBoundary.width;
+
+            // reset time meter
+            nebulaAnimationRunningTime = 0.0;
+            // control frame
+            nebulaAnimationFrame++;
+            if (nebulaAnimationFrame > 7)
+            {
+                nebulaAnimationFrame = 0;
+            }
+        }
+
+        // draw nebula
+        DrawTextureRec(nebulaTexture, nebulaTextureBoundary, nebulaPosition, WHITE);
+
+        // draw Scarfy
         DrawTextureRec(scarfyTexture, scarfyTextureBoundary, scarfyPosition, WHITE);
 
         EndDrawing();
     }
+
+    // exit cleaning up
     UnloadTexture(scarfyTexture);
+    UnloadTexture(nebulaTexture);
     CloseWindow();
 }
