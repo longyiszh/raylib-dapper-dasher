@@ -1,5 +1,14 @@
 #include "raylib.h"
 
+struct AnimationData
+{
+    Rectangle textureBoundary;
+    Vector2 position;
+    int animationframe;
+    float updateTime;
+    float runningTime;
+};
+
 int main()
 {
     // Window dimension
@@ -18,40 +27,39 @@ int main()
 
     // scarfy
     Texture2D scarfyTexture = LoadTexture("textures/scarfy.png");
-    Rectangle scarfyTextureBoundary;
-    scarfyTextureBoundary.width = scarfyTexture.width / 6;
-    scarfyTextureBoundary.height = scarfyTexture.height;
-    scarfyTextureBoundary.x = 0;
-    scarfyTextureBoundary.y = 0;
-    // init position: center of window
-    Vector2 scarfyPosition;
-    scarfyPosition.x = (windowWidth - scarfyTextureBoundary.width) / 2;
-    scarfyPosition.y = windowHeight - scarfyTextureBoundary.height;
+    AnimationData scarfyAnimData{
+        .textureBoundary{
+            .x = 0,
+            .y = 0,
+            .width{scarfyTexture.width / 6},
+            .height{scarfyTexture.height}},
+        .position{},
+        .animationframe{0},
+        .updateTime{1.0 / 12.0},
+        .runningTime{0}};
+
+    scarfyAnimData.position.x = (windowWidth - scarfyAnimData.textureBoundary.width) / 2;
+    scarfyAnimData.position.y = windowHeight - scarfyAnimData.textureBoundary.height;
 
     // nebula hazard
     Texture2D nebulaTexture = LoadTexture("textures/12_nebula_spritesheet.png");
-    Rectangle nebulaTextureBoundary = {
-        .x = 0,
-        .y = 0,
-        .width = nebulaTexture.width / 8.0,
-        .height = nebulaTexture.height / 8.0};
-    Vector2 nebulaPosition = {
-        .x = windowWidth,
-        .y = windowHeight - nebulaTextureBoundary.height,
-    };
+
+    AnimationData nebulaAnimData{
+        .textureBoundary{
+            .x = 0,
+            .y = 0,
+            .width{nebulaTexture.width / 8.0},
+            .height{nebulaTexture.height / 8.0}},
+        .position{},
+        .animationframe{0},
+        .updateTime{1.0 / 12.0},
+        .runningTime{0}};
+
+    nebulaAnimData.position.x = windowWidth;
+    nebulaAnimData.position.y = windowHeight - nebulaAnimData.textureBoundary.height;
 
     // start on the ground
-    float scarfyBoundaryInitialTop{scarfyPosition.y};
-
-    // animation frames
-    int scarfyAnimationFrame{0};
-    // amount of time before we update the animation frame
-    const float scarfyAnimationUpdateTime{1.0 / 12.0};
-    float scarfyAnimationRunningTime{0};
-
-    int nebulaAnimationFrame{0};
-    const float nebulaAnimationUpdateTime{1.0 / 12.0};
-    float nebulaAnimationRunningTime{0};
+    float scarfyBoundaryInitialTop{scarfyAnimData.position.y};
 
     bool isInAir{false};
 
@@ -66,7 +74,7 @@ int main()
         ClearBackground(WHITE);
 
         // ground check
-        isInAir = scarfyPosition.y < scarfyBoundaryInitialTop;
+        isInAir = scarfyAnimData.position.y < scarfyBoundaryInitialTop;
         if (isInAir)
         {
             scarfyVelocityY += gravity * deltaTime;
@@ -87,52 +95,52 @@ int main()
         }
 
         // update position
-        scarfyPosition.y += scarfyVelocityY * deltaTime;
-        nebulaPosition.x += nebulaVelocityX * deltaTime;
+        scarfyAnimData.position.y += scarfyVelocityY * deltaTime;
+        nebulaAnimData.position.x += nebulaVelocityX * deltaTime;
 
         // update animation frame
         if (!isInAir)
         {
             // => pause Scarfy while in air
-            scarfyAnimationRunningTime += deltaTime;
+            scarfyAnimData.runningTime += deltaTime;
         }
 
-        if (scarfyAnimationRunningTime >= scarfyAnimationUpdateTime)
+        if (scarfyAnimData.runningTime >= scarfyAnimData.updateTime)
         {
-            scarfyTextureBoundary.x = scarfyAnimationFrame * scarfyTextureBoundary.width;
+            scarfyAnimData.textureBoundary.x = scarfyAnimData.animationframe * scarfyAnimData.textureBoundary.width;
 
-            // reset time meter
-            scarfyAnimationRunningTime = 0.0;
+            // reset animation stopwatch
+            scarfyAnimData.runningTime = 0.0;
             // control frame
-            scarfyAnimationFrame++;
-            if (scarfyAnimationFrame > 5)
+            scarfyAnimData.animationframe++;
+            if (scarfyAnimData.animationframe > 5)
             {
-                scarfyAnimationFrame = 0;
+                scarfyAnimData.animationframe = 0;
             }
         }
 
         // => nebula
-        nebulaAnimationRunningTime += deltaTime;
+        nebulaAnimData.runningTime += deltaTime;
 
-        if (nebulaAnimationRunningTime >= nebulaAnimationUpdateTime)
+        if (nebulaAnimData.runningTime >= nebulaAnimData.updateTime)
         {
-            nebulaTextureBoundary.x = nebulaAnimationFrame * nebulaTextureBoundary.width;
+            nebulaAnimData.textureBoundary.x = nebulaAnimData.animationframe * nebulaAnimData.textureBoundary.width;
 
-            // reset time meter
-            nebulaAnimationRunningTime = 0.0;
+            // reset animation stopwatch
+            nebulaAnimData.runningTime = 0.0;
             // control frame
-            nebulaAnimationFrame++;
-            if (nebulaAnimationFrame > 7)
+            nebulaAnimData.animationframe++;
+            if (nebulaAnimData.animationframe > 7)
             {
-                nebulaAnimationFrame = 0;
+                nebulaAnimData.animationframe = 0;
             }
         }
 
         // draw nebula
-        DrawTextureRec(nebulaTexture, nebulaTextureBoundary, nebulaPosition, WHITE);
+        DrawTextureRec(nebulaTexture, nebulaAnimData.textureBoundary, nebulaAnimData.position, WHITE);
 
         // draw Scarfy
-        DrawTextureRec(scarfyTexture, scarfyTextureBoundary, scarfyPosition, WHITE);
+        DrawTextureRec(scarfyTexture, scarfyAnimData.textureBoundary, scarfyAnimData.position, WHITE);
 
         EndDrawing();
     }
