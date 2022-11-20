@@ -12,9 +12,9 @@ struct AnimationData
 int main()
 {
     // Window dimension
-    const int windowWidth = 800;
-    const int windowHeight = 600;
-    InitWindow(windowWidth, windowHeight, "Raylib Dapper Dasher");
+    // [width, height]
+    int windowDimensions[]{800, 600};
+    InitWindow(windowDimensions[0], windowDimensions[1], "Raylib Dapper Dasher");
 
     // acceleration due to gravity (pixels/(s^2))
     const int gravity{1000};
@@ -38,25 +38,34 @@ int main()
         .updateTime{1.0 / 12.0},
         .runningTime{0}};
 
-    scarfyAnimData.position.x = (windowWidth - scarfyAnimData.textureBoundary.width) / 2;
-    scarfyAnimData.position.y = windowHeight - scarfyAnimData.textureBoundary.height;
+    scarfyAnimData.position.x = (windowDimensions[0] - scarfyAnimData.textureBoundary.width) / 2;
+    scarfyAnimData.position.y = windowDimensions[1] - scarfyAnimData.textureBoundary.height;
 
     // nebula hazard
     Texture2D nebulaTexture = LoadTexture("textures/12_nebula_spritesheet.png");
 
-    AnimationData nebulaAnimData{
-        .textureBoundary{
-            .x = 0,
-            .y = 0,
-            .width{nebulaTexture.width / 8.0},
-            .height{nebulaTexture.height / 8.0}},
-        .position{},
-        .animationframe{0},
-        .updateTime{1.0 / 12.0},
-        .runningTime{0}};
+    const int nebulaeCount{6};
+    const float nebulaTextureBoundaryWidth{nebulaTexture.width / 8.0};
+    const float nebulaTextureBoundaryHeight{nebulaTexture.height / 8.0};
 
-    nebulaAnimData.position.x = windowWidth;
-    nebulaAnimData.position.y = windowHeight - nebulaAnimData.textureBoundary.height;
+    AnimationData nebulaAnims[nebulaeCount]{};
+
+    for (int i = 0; i < nebulaeCount; i++)
+    {
+        nebulaAnims[i] = {
+            .textureBoundary{
+                .x = 0,
+                .y = 0,
+                .width{nebulaTextureBoundaryWidth},
+                .height{nebulaTextureBoundaryHeight}},
+            .position{
+                .y = windowDimensions[1] - nebulaTextureBoundaryHeight},
+            .animationframe{0},
+            .updateTime{1.0 / 12.0},
+            .runningTime{0}};
+
+        nebulaAnims[i].position.x = windowDimensions[0] + i * 300;
+    }
 
     // start on the ground
     float scarfyBoundaryInitialTop{scarfyAnimData.position.y};
@@ -96,7 +105,11 @@ int main()
 
         // update position
         scarfyAnimData.position.y += scarfyVelocityY * deltaTime;
-        nebulaAnimData.position.x += nebulaVelocityX * deltaTime;
+
+        for (int i = 0; i < nebulaeCount; i++)
+        {
+            nebulaAnims[i].position.x += nebulaVelocityX * deltaTime;
+        }
 
         // update animation frame
         if (!isInAir)
@@ -120,24 +133,31 @@ int main()
         }
 
         // => nebula
-        nebulaAnimData.runningTime += deltaTime;
 
-        if (nebulaAnimData.runningTime >= nebulaAnimData.updateTime)
+        for (int i = 0; i < nebulaeCount; i++)
         {
-            nebulaAnimData.textureBoundary.x = nebulaAnimData.animationframe * nebulaAnimData.textureBoundary.width;
+            nebulaAnims[i].runningTime += deltaTime;
 
-            // reset animation stopwatch
-            nebulaAnimData.runningTime = 0.0;
-            // control frame
-            nebulaAnimData.animationframe++;
-            if (nebulaAnimData.animationframe > 7)
+            if (nebulaAnims[i].runningTime >= nebulaAnims[i].updateTime)
             {
-                nebulaAnimData.animationframe = 0;
+                nebulaAnims[i].textureBoundary.x = nebulaAnims[i].animationframe * nebulaAnims[i].textureBoundary.width;
+
+                // reset animation stopwatch
+                nebulaAnims[i].runningTime = 0.0;
+                // control frame
+                nebulaAnims[i].animationframe++;
+                if (nebulaAnims[i].animationframe > 7)
+                {
+                    nebulaAnims[i].animationframe = 0;
+                }
             }
         }
 
-        // draw nebula
-        DrawTextureRec(nebulaTexture, nebulaAnimData.textureBoundary, nebulaAnimData.position, WHITE);
+        // draw nebulae
+        for (int i = 0; i < nebulaeCount; i++)
+        {
+            DrawTextureRec(nebulaTexture, nebulaAnims[i].textureBoundary, nebulaAnims[i].position, WHITE);
+        }
 
         // draw Scarfy
         DrawTextureRec(scarfyTexture, scarfyAnimData.textureBoundary, scarfyAnimData.position, WHITE);
