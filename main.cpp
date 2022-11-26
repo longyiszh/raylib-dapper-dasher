@@ -9,6 +9,34 @@ struct AnimationData
     float runningTime;
 };
 
+bool checkInAir(AnimationData objectAnimData, int groundLevelRecTopY)
+{
+    return objectAnimData.position.y < groundLevelRecTopY;
+}
+
+AnimationData updateAnimationData(AnimationData nextAnimData, float currentDeltaTime, int animFrameCount, bool pauseInAir, bool inAir)
+{
+    if (!pauseInAir || !inAir)
+    {
+        nextAnimData.runningTime += currentDeltaTime;
+    } // else, pause the anim play for this object
+
+    if (nextAnimData.runningTime >= nextAnimData.updateTime)
+    {
+        nextAnimData.textureBoundary.x = nextAnimData.animationframe * nextAnimData.textureBoundary.width;
+
+        // reset animation stopwatch
+        nextAnimData.runningTime = 0.0;
+        // control frame
+        nextAnimData.animationframe++;
+        if (nextAnimData.animationframe > animFrameCount - 1)
+        {
+            nextAnimData.animationframe = 0;
+        }
+    }
+    return nextAnimData;
+}
+
 int main()
 {
     // Window dimension
@@ -83,7 +111,7 @@ int main()
         ClearBackground(WHITE);
 
         // ground check
-        isInAir = scarfyAnimData.position.y < scarfyBoundaryInitialTop;
+        isInAir = checkInAir(scarfyAnimData, scarfyBoundaryInitialTop);
         if (isInAir)
         {
             scarfyVelocityY += gravity * deltaTime;
@@ -111,46 +139,23 @@ int main()
             nebulaAnims[i].position.x += nebulaVelocityX * deltaTime;
         }
 
-        // update animation frame
-        if (!isInAir)
-        {
-            // => pause Scarfy while in air
-            scarfyAnimData.runningTime += deltaTime;
-        }
+        // => update animation frame for Scarfy
+        scarfyAnimData = updateAnimationData(
+            scarfyAnimData,
+            deltaTime,
+            6,
+            true,
+            isInAir);
 
-        if (scarfyAnimData.runningTime >= scarfyAnimData.updateTime)
-        {
-            scarfyAnimData.textureBoundary.x = scarfyAnimData.animationframe * scarfyAnimData.textureBoundary.width;
-
-            // reset animation stopwatch
-            scarfyAnimData.runningTime = 0.0;
-            // control frame
-            scarfyAnimData.animationframe++;
-            if (scarfyAnimData.animationframe > 5)
-            {
-                scarfyAnimData.animationframe = 0;
-            }
-        }
-
-        // => nebula
-
+        // => update animation frame for nebulae
         for (int i = 0; i < nebulaeCount; i++)
         {
-            nebulaAnims[i].runningTime += deltaTime;
-
-            if (nebulaAnims[i].runningTime >= nebulaAnims[i].updateTime)
-            {
-                nebulaAnims[i].textureBoundary.x = nebulaAnims[i].animationframe * nebulaAnims[i].textureBoundary.width;
-
-                // reset animation stopwatch
-                nebulaAnims[i].runningTime = 0.0;
-                // control frame
-                nebulaAnims[i].animationframe++;
-                if (nebulaAnims[i].animationframe > 7)
-                {
-                    nebulaAnims[i].animationframe = 0;
-                }
-            }
+            nebulaAnims[i] = updateAnimationData(
+                nebulaAnims[i],
+                deltaTime,
+                8,
+                false,
+                false);
         }
 
         // draw nebulae
