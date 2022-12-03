@@ -9,6 +9,22 @@ struct AnimationData
     float runningTime;
 };
 
+class BackgroundTextureData
+{
+public:
+    Texture2D texture;
+    float scale;
+    Vector2 leftInstancePosition;
+    Vector2 rightInstancePosition;
+    float velocityX;
+
+public:
+    float getScaledWidth()
+    {
+        return texture.width * scale;
+    }
+};
+
 bool checkInAir(AnimationData objectAnimData, int groundLevelRecTopY)
 {
     return objectAnimData.position.y < groundLevelRecTopY;
@@ -37,6 +53,19 @@ AnimationData updateAnimationData(AnimationData nextAnimData, float currentDelta
     return nextAnimData;
 }
 
+void moveBackgroundBuildings(BackgroundTextureData &backgroundBuilding, float deltaTime)
+{
+    backgroundBuilding.leftInstancePosition.x += backgroundBuilding.velocityX * deltaTime;
+
+    // reset left instance posotion when completely out left
+    if (backgroundBuilding.leftInstancePosition.x <= -backgroundBuilding.getScaledWidth())
+    {
+        backgroundBuilding.leftInstancePosition.x = 0;
+    }
+
+    backgroundBuilding.rightInstancePosition.x = backgroundBuilding.leftInstancePosition.x + backgroundBuilding.getScaledWidth();
+}
+
 int main()
 {
     // Window dimension
@@ -52,6 +81,33 @@ int main()
     float scarfyVelocityY{0};
 
     float nebulaVelocityX{-600};
+
+    BackgroundTextureData farBuildings{
+        .texture{LoadTexture("textures/far-buildings.png")},
+        .scale{3.5},
+        .leftInstancePosition{0.0, 0.0},
+        .rightInstancePosition{0.0, 0.0},
+        .velocityX{-100}};
+
+    BackgroundTextureData midBuildings{
+        .texture{LoadTexture("textures/back-buildings.png")},
+        .scale{3.5},
+        .leftInstancePosition{0.0, 30.0},
+        .rightInstancePosition{0.0, 30.0},
+        .velocityX{-200}};
+
+    BackgroundTextureData nearBuildings{
+        .texture{LoadTexture("textures/foreground.png")},
+        .scale{2.5},
+        .leftInstancePosition{0.0, 200.0},
+        .rightInstancePosition{0.0, 200.0},
+        .velocityX{-250}};
+
+    int backgroundBuildingsCount{3};
+    BackgroundTextureData backgroundBuildings[backgroundBuildingsCount]{
+        farBuildings,
+        midBuildings,
+        nearBuildings};
 
     // scarfy
     Texture2D scarfyTexture = LoadTexture("textures/scarfy.png");
@@ -109,6 +165,16 @@ int main()
 
         BeginDrawing();
         ClearBackground(WHITE);
+
+        // move far buildings
+        for (int i = 0; i < backgroundBuildingsCount; i++)
+        {
+            BackgroundTextureData &currentBuilding{backgroundBuildings[i]};
+            moveBackgroundBuildings(currentBuilding, deltaTime);
+            // draw far buildings
+            DrawTextureEx(currentBuilding.texture, currentBuilding.leftInstancePosition, 0.0, currentBuilding.scale, WHITE);
+            DrawTextureEx(currentBuilding.texture, currentBuilding.rightInstancePosition, 0.0, currentBuilding.scale, WHITE);
+        }
 
         // ground check
         isInAir = checkInAir(scarfyAnimData, scarfyBoundaryInitialTop);
@@ -173,5 +239,9 @@ int main()
     // exit cleaning up
     UnloadTexture(scarfyTexture);
     UnloadTexture(nebulaTexture);
+    for (int i = 0; i < backgroundBuildingsCount; i++)
+    {
+        UnloadTexture(backgroundBuildings[i].texture);
+    }
     CloseWindow();
 }
