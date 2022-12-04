@@ -148,7 +148,7 @@ int main()
             .updateTime{1.0 / 12.0},
             .runningTime{0}};
 
-        nebulaAnims[i].position.x = windowDimensions[0] + i * 300;
+        nebulaAnims[i].position.x = windowDimensions[0] + i * 777;
     }
 
     // finish line - same point of the last nebula
