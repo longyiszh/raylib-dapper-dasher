@@ -151,10 +151,17 @@ int main()
         nebulaAnims[i].position.x = windowDimensions[0] + i * 300;
     }
 
+    // finish line - same point of the last nebula
+    float finishLineX{nebulaAnims[nebulaeCount - 1].position.x};
+
     // start on the ground
     float scarfyBoundaryInitialTop{scarfyAnimData.position.y};
 
     bool isInAir{false};
+
+    bool collision{false};
+
+    bool godMod{false};
 
     SetTargetFPS(60);
 
@@ -174,6 +181,13 @@ int main()
             // draw far buildings
             DrawTextureEx(currentBuilding.texture, currentBuilding.leftInstancePosition, 0.0, currentBuilding.scale, WHITE);
             DrawTextureEx(currentBuilding.texture, currentBuilding.rightInstancePosition, 0.0, currentBuilding.scale, WHITE);
+        }
+
+        if (collision && !godMod)
+        {
+            DrawText("Game Over!", windowDimensions[0] / 2 - 100, windowDimensions[1] / 2 - 50, 50, RED);
+            EndDrawing();
+            continue;
         }
 
         // ground check
@@ -205,6 +219,31 @@ int main()
             nebulaAnims[i].position.x += nebulaVelocityX * deltaTime;
         }
 
+        finishLineX += nebulaVelocityX * deltaTime;
+
+        // check collision
+        Rectangle scarfyCollisionRec{
+            .x{scarfyAnimData.position.x},
+            .y{scarfyAnimData.position.y},
+            .width{scarfyAnimData.textureBoundary.width},
+            .height{scarfyAnimData.textureBoundary.height}};
+
+        for (AnimationData anim : nebulaAnims)
+        {
+            float nebulaPadding{50};
+            // create collision box
+            Rectangle nebularCollisionRec{
+                .x{anim.position.x + nebulaPadding},
+                .y{anim.position.y + nebulaPadding},
+                .width{anim.textureBoundary.width - 2 * nebulaPadding},
+                .height{anim.textureBoundary.height - 2 * nebulaPadding}};
+            if (CheckCollisionRecs(scarfyCollisionRec, nebularCollisionRec))
+            {
+                collision = true;
+                break;
+            }
+        }
+
         // => update animation frame for Scarfy
         scarfyAnimData = updateAnimationData(
             scarfyAnimData,
@@ -232,6 +271,11 @@ int main()
 
         // draw Scarfy
         DrawTextureRec(scarfyTexture, scarfyAnimData.textureBoundary, scarfyAnimData.position, WHITE);
+
+        if (scarfyAnimData.position.x >= finishLineX)
+        {
+            DrawText("You Win!", windowDimensions[0] / 2 - 100, windowDimensions[1] / 2 - 50, 50, GREEN);
+        }
 
         EndDrawing();
     }
